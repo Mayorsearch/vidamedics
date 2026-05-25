@@ -7,9 +7,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">V</span>
-              </div>
+              <img src="/logo.svg" alt="Vidamedics" className="w-8 h-8" />
               <span className="text-xl font-bold">Vida<span className="text-purple-400">medics</span></span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed max-w-md">
@@ -40,9 +38,13 @@ export function Footer() {
             <h3 className="font-semibold text-sm uppercase tracking-wider text-gray-400 mb-4">Categories</h3>
             <ul className="space-y-2 list-none p-0 m-0">
               <li><span className="text-gray-300 text-sm">Stethoscopes</span></li>
-              <li><span className="text-gray-300 text-sm">Gloves</span></li>
               <li><span className="text-gray-300 text-sm">Diagnostic Tools</span></li>
               <li><span className="text-gray-300 text-sm">PPE</span></li>
+              <li><span className="text-gray-300 text-sm">Surgical</span></li>
+              <li><span className="text-gray-300 text-sm">First Aid</span></li>
+              <li><span className="text-gray-300 text-sm">Mobility Aids</span></li>
+              <li><span className="text-gray-300 text-sm">Patient Monitoring</span></li>
+              <li><span className="text-gray-300 text-sm">Lab Equipment</span></li>
             </ul>
           </div>
         </div>

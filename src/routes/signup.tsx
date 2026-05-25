@@ -37,8 +37,8 @@ function SignupPage() {
     return (
       <div className="min-h-[70vh] flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle size={32} className="text-green-600" />
+          <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle size={32} className="text-purple-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-3">Account Created!</h1>
           <p className="text-gray-500 mb-6">
@@ -90,8 +90,8 @@ function SignupPage() {
     <div className="min-h-[70vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 bg-purple-700 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-lg">V</span>
+          <div className="w-12 h-12 mx-auto mb-4">
+            <img src="/logo.svg" alt="Vidamedics" className="w-12 h-12" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Create your account</h1>
           <p className="text-gray-500 text-sm mt-1">Join Vidamedics to start shopping</p>

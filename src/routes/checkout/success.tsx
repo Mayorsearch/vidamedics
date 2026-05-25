@@ -42,9 +42,9 @@ function CheckoutSuccess() {
     <div className="min-h-[70vh] flex items-center justify-center p-5">
       <div className="bg-white rounded-2xl p-12 border border-gray-100 text-center max-w-lg">
         <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${
-          status === 'success' ? 'bg-green-100' : status === 'failed' ? 'bg-red-100' : 'bg-purple-100'
+          status === 'success' ? 'bg-purple-100' : status === 'failed' ? 'bg-red-100' : 'bg-purple-100'
         }`}>
-          {status === 'success' && <CheckCircle size={40} className="text-green-600" />}
+          {status === 'success' && <CheckCircle size={40} className="text-purple-600" />}
           {status === 'failed' && <XCircle size={40} className="text-red-600" />}
           {status === 'verifying' && <Loader2 size={40} className="text-purple-700 animate-spin" />}
         </div>
