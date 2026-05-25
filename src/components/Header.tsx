@@ -1,7 +1,7 @@
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useIdentity } from '../lib/identity-context'
 import { useCart } from '../lib/cart-context'
-import { ShoppingCart, Menu, X, Shield, LayoutDashboard } from 'lucide-react'
+import { ShoppingCart, Menu, X, Shield, LayoutDashboard, UserCircle } from 'lucide-react'
 import { useState } from 'react'
 import { isAdminUser } from '../lib/admin'
 
@@ -61,7 +61,8 @@ export function Header() {
               <>
                 {user ? (
                   <div className="hidden md:flex items-center gap-3">
-                    <Link to="/dashboard" className="text-sm text-gray-600 hover:text-purple-700 no-underline transition-colors">
+                    <Link to="/profile" className="text-sm text-gray-600 hover:text-purple-700 no-underline transition-colors flex items-center gap-1">
+                      <UserCircle size={14} />
                       {user.name || user.email}
                     </Link>
                     <button
@@ -118,6 +119,10 @@ export function Header() {
             )}
             {ready && user ? (
               <>
+                <Link to="/profile" className="block text-gray-600 hover:text-purple-700 font-medium text-sm no-underline flex items-center gap-1" onClick={() => setMobileOpen(false)}>
+                  <UserCircle size={14} />
+                  My Profile
+                </Link>
                 <span className="block text-sm text-gray-500">{user.name || user.email}</span>
                 <button onClick={() => { handleLogout(); setMobileOpen(false) }} className="text-sm text-purple-700 bg-transparent border-0 cursor-pointer p-0">
                   Logout
