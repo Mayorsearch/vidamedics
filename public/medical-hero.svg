@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <!-- Medical professional silhouette -->
+  <g opacity="0.15">
+    <!-- Head -->
+    <circle cx="400" cy="120" r="45" fill="white"/>
+    <!-- Body / Coat -->
+    <path d="M355 165 Q340 180 330 220 L320 320 Q318 340 330 350 L340 360 L340 500 Q340 520 360 520 L440 520 Q460 520 460 500 L460 360 L470 350 Q482 340 480 320 L470 220 Q460 180 445 165 Z" fill="white"/>
+    <!-- Arms -->
+    <path d="M330 220 Q300 240 280 300 Q270 330 290 340 L320 320" fill="white"/>
+    <path d="M470 220 Q500 240 520 300 Q530 330 510 340 L480 320" fill="white"/>
+    <!-- Stethoscope -->
+    <path d="M380 180 Q370 200 375 240 Q378 260 390 270 Q400 278 410 270 Q422 260 425 240 Q430 200 420 180" stroke="white" stroke-width="3" fill="none"/>
+    <circle cx="400" cy="278" r="10" fill="white"/>
+    <!-- Cross on coat -->
+    <rect x="390" y="200" width="20" height="60" rx="3" fill="rgba(0,0,0,0.15)"/>
+    <rect x="370" y="220" width="60" height="20" rx="3" fill="rgba(0,0,0,0.15)"/>
+  </g>
+
+  <!-- Floating medical icons with animation classes -->
+  <!-- Heartbeat monitor -->
+  <g opacity="0.12" transform="translate(120, 150)">
+    <rect x="0" y="0" width="80" height="60" rx="8" stroke="white" stroke-width="2" fill="none"/>
+    <polyline points="10,30 25,30 30,15 35,45 40,30 50,30 55,20 60,35 65,30 75,30" stroke="white" stroke-width="2" fill="none"/>
+  </g>
+
+  <!-- DNA helix -->
+  <g opacity="0.1" transform="translate(650, 100)">
+    <path d="M0,0 Q20,20 0,40 Q-20,60 0,80 Q20,100 0,120" stroke="white" stroke-width="2" fill="none"/>
+    <path d="M30,0 Q10,20 30,40 Q50,60 30,80 Q10,100 30,120" stroke="white" stroke-width="2" fill="none"/>
+    <line x1="5" y1="20" x2="25" y2="20" stroke="white" stroke-width="1.5" opacity="0.5"/>
+    <line x1="5" y1="60" x2="25" y2="60" stroke="white" stroke-width="1.5" opacity="0.5"/>
+    <line x1="5" y1="100" x2="25" y2="100" stroke="white" stroke-width="1.5" opacity="0.5"/>
+  </g>
+
+  <!-- Pill capsule -->
+  <g opacity="0.1" transform="translate(160, 400)">
+    <rect x="0" y="0" width="50" height="22" rx="11" stroke="white" stroke-width="2" fill="none"/>
+    <line x1="25" y1="0" x2="25" y2="22" stroke="white" stroke-width="1.5"/>
+  </g>
+
+  <!-- Medical cross -->
+  <g opacity="0.08" transform="translate(620, 380)">
+    <rect x="15" y="0" width="20" height="50" rx="3" fill="white"/>
+    <rect x="0" y="15" width="50" height="20" rx="3" fill="white"/>
+  </g>
+
+  <!-- Pulse dots -->
+  <circle cx="200" cy="300" r="4" fill="white" opacity="0.08"/>
+  <circle cx="600" cy="280" r="6" fill="white" opacity="0.06"/>
+  <circle cx="700" cy="450" r="5" fill="white" opacity="0.07"/>
+  <circle cx="100" cy="500" r="3" fill="white" opacity="0.09"/>
+</svg>

@@ -44,7 +44,7 @@ function ProductDetail() {
           <div className="flex items-center gap-2 mb-3">
             <span className="text-sm font-medium text-purple-700 bg-purple-50 px-3 py-1 rounded-full">{product.category}</span>
             {product.inStock ? (
-              <span className="text-sm text-green-600 font-medium flex items-center gap-1">
+              <span className="text-sm text-purple-600 font-medium flex items-center gap-1">
                 <Check size={14} /> In Stock
               </span>
             ) : (
@@ -67,7 +67,7 @@ function ProductDetail() {
             disabled={!product.inStock}
             className={`w-full flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-base font-semibold transition-all border-0 cursor-pointer ${
               added
-                ? 'bg-green-600 text-white'
+                ? 'bg-purple-600 text-white'
                 : 'bg-purple-700 text-white hover:bg-purple-800'
             } disabled:bg-gray-300 disabled:cursor-not-allowed`}
           >
