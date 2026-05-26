@@ -1,6 +1,6 @@
 import { createFileRoute, redirect, Link, Outlet, useRouterState } from '@tanstack/react-router'
 import { getServerUser } from '@/lib/auth'
-import { Bell, Mail, Package, LayoutDashboard, PlusCircle, ChevronRight, LogOut, CreditCard } from 'lucide-react'
+import { Bell, Mail, Package, LayoutDashboard, PlusCircle, ChevronRight, LogOut, CreditCard, Bot } from 'lucide-react'
 import { getUnreadCount } from '@/lib/notifications'
 import { useIdentity } from '@/lib/identity-context'
 import { isAdminUser } from '@/lib/admin'
@@ -22,6 +22,7 @@ export const Route = createFileRoute('/admin')({
 const navItems = [
   { to: '/admin' as const, label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { to: '/admin/products/new' as const, label: 'Add Product', icon: PlusCircle, exact: false },
+  { to: '/admin/ai-generator' as const, label: 'AI Generator', icon: Bot, exact: false },
   { to: '/admin/email' as const, label: 'Email Users', icon: Mail, exact: false },
   { to: '/admin/notifications' as const, label: 'Notifications', icon: Bell, exact: false },
   { to: '/admin/settings' as const, label: 'Payment Settings', icon: CreditCard, exact: false },
