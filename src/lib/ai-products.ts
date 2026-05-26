@@ -1,5 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
+import { getStore } from '@netlify/blobs'
 import { requireAuthMiddleware, requireAdminMiddleware } from '../middleware/identity.js'
 import { db } from '../../db/index.js'
 import { products } from '../../db/schema.js'
@@ -98,4 +100,31 @@ export const saveGeneratedProducts = createServerFn({ method: 'POST' })
       inserted.push(product)
     }
     return inserted
+  })
+
+export const generateProductImage = createServerFn({ method: 'POST' })
+  .middleware([requireAuthMiddleware, requireAdminMiddleware])
+  .inputValidator((data: { productName: string; category: string }) => data)
+  .handler(async ({ data }) => {
+    const openai = new OpenAI()
+
+    const result = await openai.images.generate({
+      model: 'gpt-image-1',
+      prompt: `Professional product photo of a medical equipment: ${data.productName}. Category: ${data.category}. Clean white background, high-quality commercial product photography, studio lighting, no text or watermarks.`,
+      size: '1024x1024',
+    })
+
+    const imageBase64 = result.data[0].b64_json
+    if (!imageBase64) {
+      throw new Error('Image generation returned no data')
+    }
+
+    const store = getStore({ name: 'product-images', consistency: 'strong' })
+    const key = `${Date.now()}-ai-${data.productName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}.png`
+    const buffer = Buffer.from(imageBase64, 'base64')
+    await store.set(key, buffer, {
+      metadata: { contentType: 'image/png' },
+    })
+
+    return { url: `/api/images/${key}` }
   })

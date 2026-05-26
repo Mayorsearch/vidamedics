@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
-import { ArrowLeft, Bot, Loader2, Check, Package, Sparkles, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Bot, Loader2, Check, Package, Sparkles, AlertCircle, ImagePlus } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
-import { generateProducts, saveGeneratedProducts } from '@/lib/ai-products'
+import { generateProducts, saveGeneratedProducts, generateProductImage } from '@/lib/ai-products'
 import { formatPrice } from '@/lib/currency'
 
 export const Route = createFileRoute('/admin/ai-generator')({
@@ -20,6 +20,7 @@ type GeneratedProduct = {
   imageUrl: string
   inStock: boolean
   selected: boolean
+  imageStatus: 'none' | 'generating' | 'done' | 'error'
 }
 
 function AIGenerator() {
@@ -27,6 +28,8 @@ function AIGenerator() {
   const [count, setCount] = useState(5)
   const [generating, setGenerating] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [generatingImages, setGeneratingImages] = useState(false)
+  const [imageProgress, setImageProgress] = useState({ current: 0, total: 0 })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [generatedProducts, setGeneratedProducts] = useState<GeneratedProduct[]>([])
@@ -40,7 +43,7 @@ function AIGenerator() {
 
     try {
       const products = await generateProducts({ data: { category, count } })
-      setGeneratedProducts(products.map(p => ({ ...p, selected: true })))
+      setGeneratedProducts(products.map(p => ({ ...p, selected: true, imageStatus: 'none' as const })))
     } catch (err: any) {
       setError(err.message || 'Failed to generate products. Please try again.')
     } finally {
@@ -54,6 +57,43 @@ function AIGenerator() {
     )
   }
 
+  const handleGenerateImages = async () => {
+    setError('')
+    setGeneratingImages(true)
+    const selectedIndices = generatedProducts
+      .map((p, i) => (p.selected ? i : -1))
+      .filter(i => i !== -1)
+    setImageProgress({ current: 0, total: selectedIndices.length })
+
+    for (let idx = 0; idx < selectedIndices.length; idx++) {
+      const productIndex = selectedIndices[idx]
+      const product = generatedProducts[productIndex]
+
+      setGeneratedProducts(prev =>
+        prev.map((p, i) => (i === productIndex ? { ...p, imageStatus: 'generating' } : p)),
+      )
+
+      try {
+        const result = await generateProductImage({
+          data: { productName: product.name, category: product.category },
+        })
+        setGeneratedProducts(prev =>
+          prev.map((p, i) =>
+            i === productIndex ? { ...p, imageUrl: result.url, imageStatus: 'done' } : p,
+          ),
+        )
+      } catch {
+        setGeneratedProducts(prev =>
+          prev.map((p, i) => (i === productIndex ? { ...p, imageStatus: 'error' } : p)),
+        )
+      }
+
+      setImageProgress({ current: idx + 1, total: selectedIndices.length })
+    }
+
+    setGeneratingImages(false)
+  }
+
   const toggleAll = (selected: boolean) => {
     setGeneratedProducts(prev => prev.map(p => ({ ...p, selected })))
   }
@@ -63,7 +103,7 @@ function AIGenerator() {
   const handleSave = async () => {
     const toSave = generatedProducts
       .filter(p => p.selected)
-      .map(({ selected, ...rest }) => rest)
+      .map(({ selected, imageStatus, ...rest }) => rest)
 
     if (toSave.length === 0) {
       setError('Please select at least one product to add.')
@@ -102,7 +142,7 @@ function AIGenerator() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">AI Product Generator</h1>
             <p className="text-sm text-gray-500 mt-0.5">
-              Generate medical equipment listings with AI-powered descriptions and Nigerian market prices
+              Generate medical equipment listings with AI-powered descriptions, images, and Nigerian market prices
             </p>
           </div>
         </div>
@@ -249,6 +289,18 @@ function AIGenerator() {
                     {product.selected && <Check size={12} className="text-white" />}
                   </button>
 
+                  <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-200">
+                    {product.imageStatus === 'generating' ? (
+                      <Loader2 size={20} className="text-purple-500 animate-spin" />
+                    ) : product.imageUrl && product.imageUrl !== '/placeholder.png' ? (
+                      <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                    ) : product.imageStatus === 'error' ? (
+                      <AlertCircle size={18} className="text-red-400" />
+                    ) : (
+                      <ImagePlus size={18} className="text-gray-300" />
+                    )}
+                  </div>
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -285,10 +337,27 @@ function AIGenerator() {
             ))}
           </div>
 
-          <div className="mt-6 flex items-center gap-3">
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <button
+              onClick={handleGenerateImages}
+              disabled={generatingImages || generating || selectedCount === 0}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-6 py-3 rounded-xl font-medium text-sm hover:from-indigo-700 hover:to-blue-700 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-wait border-0 cursor-pointer"
+            >
+              {generatingImages ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Generating Images ({imageProgress.current}/{imageProgress.total})...
+                </>
+              ) : (
+                <>
+                  <ImagePlus size={16} />
+                  Generate Images
+                </>
+              )}
+            </button>
             <button
               onClick={handleSave}
-              disabled={saving || selectedCount === 0}
+              disabled={saving || selectedCount === 0 || generatingImages}
               className="inline-flex items-center gap-2 bg-purple-700 text-white px-6 py-3 rounded-xl font-medium text-sm hover:bg-purple-800 transition-all shadow-sm hover:shadow-md disabled:bg-purple-400 disabled:cursor-wait border-0 cursor-pointer"
             >
               <Package size={16} />
@@ -316,7 +385,8 @@ function AIGenerator() {
           <h3 className="text-lg font-semibold text-gray-900 mb-1">Ready to Generate</h3>
           <p className="text-sm text-gray-500 max-w-md mx-auto">
             Choose a category and the number of products, then click Generate. The AI will create
-            product names, descriptions, and realistic Nigerian market prices.
+            product names, descriptions, and realistic Nigerian market prices. You can also generate
+            product images using AI after the products are created.
           </p>
         </div>
       )}
