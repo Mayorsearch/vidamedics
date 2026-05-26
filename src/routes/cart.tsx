@@ -1,10 +1,7 @@
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCart } from '@/lib/cart-context'
-import { useIdentity } from '@/lib/identity-context'
 import { formatPrice, SHIPPING_FEE, SHIPPING_THRESHOLD } from '@/lib/currency'
-import { initializePaystackCheckout } from '@/lib/payments'
 import { Trash2, Plus, Minus, ShoppingCart, ArrowLeft } from 'lucide-react'
-import { useState } from 'react'
 
 export const Route = createFileRoute('/cart')({
   component: CartPage,
@@ -12,10 +9,7 @@ export const Route = createFileRoute('/cart')({
 
 function CartPage() {
   const { items, removeItem, updateQuantity, clearCart, totalPrice } = useCart()
-  const { user } = useIdentity()
   const navigate = useNavigate()
-  const [checkingOut, setCheckingOut] = useState(false)
-  const [checkoutError, setCheckoutError] = useState('')
 
   if (items.length === 0) {
     return (
@@ -107,37 +101,11 @@ function CartPage() {
               </div>
             </div>
             <button
-              onClick={async () => {
-                setCheckoutError('')
-                if (!user?.email) {
-                  navigate({ to: '/login' })
-                  return
-                }
-
-                setCheckingOut(true)
-                try {
-                  const checkout = await initializePaystackCheckout({
-                    data: {
-                      items: items.map(i => ({ id: i.id, quantity: i.quantity })),
-                      customerEmail: user.email,
-                    },
-                  })
-                  window.location.href = checkout.authorizationUrl
-                } catch (err: any) {
-                  setCheckoutError(err.message || 'Unable to start checkout. Please try again.')
-                  setCheckingOut(false)
-                }
-              }}
-              disabled={checkingOut}
-              className="w-full bg-purple-700 text-white py-3 rounded-lg font-semibold hover:bg-purple-800 transition-colors border-0 cursor-pointer disabled:bg-purple-400 disabled:cursor-wait"
+              onClick={() => navigate({ to: '/checkout' })}
+              className="w-full bg-purple-700 text-white py-3 rounded-lg font-semibold hover:bg-purple-800 transition-colors border-0 cursor-pointer"
             >
-              {checkingOut ? 'Opening Paystack...' : 'Pay with Paystack'}
+              Proceed to Checkout
             </button>
-            {checkoutError && (
-              <p className="mt-3 text-sm text-red-600" role="alert">
-                {checkoutError}
-              </p>
-            )}
             <Link
               to="/"
               className="block text-center text-sm text-gray-500 hover:text-purple-700 mt-4 no-underline transition-colors"

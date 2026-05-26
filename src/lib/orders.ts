@@ -5,14 +5,33 @@ import { formatPrice } from './currency.js'
 
 const ADMIN_EMAIL = 'akintolamary2018@gmail.com'
 
-export async function createOrderNotification(data: { items: Array<{ name: string; quantity: number; price: number }>; total: number; customerEmail?: string }) {
+interface DeliveryDetails {
+  fullName: string
+  phone: string
+  address: string
+  city: string
+  state: string
+  notes: string
+}
+
+export async function createOrderNotification(data: { items: Array<{ name: string; quantity: number; price: number }>; total: number; customerEmail?: string; delivery?: DeliveryDetails }) {
   const itemsList = data.items.map(i => `${i.name} x${i.quantity} - ${formatPrice(i.price * i.quantity)}`).join(', ')
   const totalFormatted = formatPrice(data.total)
+
+  let deliveryInfo = ''
+  if (data.delivery && data.delivery.fullName) {
+    deliveryInfo = ` | Deliver to: ${data.delivery.fullName}, ${data.delivery.address}, ${data.delivery.city}, ${data.delivery.state}. Phone: ${data.delivery.phone}.`
+    if (data.delivery.notes) {
+      deliveryInfo += ` Notes: ${data.delivery.notes}.`
+    }
+  }
+
+  const message = `Order total: ${totalFormatted}. Items: ${itemsList}. Customer: ${data.customerEmail || 'Guest'}${deliveryInfo}`
 
   await db.insert(notifications).values({
     type: 'order',
     title: 'New Order Received',
-    message: `Order total: ${totalFormatted}. Items: ${itemsList}. Customer: ${data.customerEmail || 'Guest'}`,
+    message,
     recipientEmail: ADMIN_EMAIL,
   })
 
@@ -26,7 +45,7 @@ export async function createOrderNotification(data: { items: Array<{ name: strin
           'form-name': 'admin-notifications',
           notification_type: 'order',
           title: 'New Order Received',
-          message: `Order total: ${totalFormatted}. Items: ${itemsList}. Customer: ${data.customerEmail || 'Guest'}`,
+          message,
           email: ADMIN_EMAIL,
           subject: `Vidamedics - New Order: ${totalFormatted}`,
         }).toString(),

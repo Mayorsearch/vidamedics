@@ -15,9 +15,19 @@ const checkoutItemSchema = z.object({
   quantity: z.number().int().positive().max(99),
 })
 
+const deliveryDetailsSchema = z.object({
+  fullName: z.string().min(1).max(200),
+  phone: z.string().min(1).max(30),
+  address: z.string().min(1).max(500),
+  city: z.string().min(1).max(100),
+  state: z.string().min(1).max(100),
+  notes: z.string().max(500).default(''),
+})
+
 const initializeCheckoutSchema = z.object({
   items: z.array(checkoutItemSchema).min(1),
   customerEmail: z.string().email(),
+  delivery: deliveryDetailsSchema,
 })
 
 const verifyPaymentSchema = z.object({
@@ -117,6 +127,7 @@ export const initializePaystackCheckout = createServerFn({ method: 'POST' })
         metadata: {
           order_items: checkout.orderItems,
           shipping: checkout.shipping,
+          delivery: data.delivery,
         },
       }),
     })
@@ -136,6 +147,12 @@ export const initializePaystackCheckout = createServerFn({ method: 'POST' })
       status: 'pending',
       itemsJson: JSON.stringify(checkout.orderItems),
       authorizationUrl: payload.data.authorization_url,
+      deliveryFullName: data.delivery.fullName,
+      deliveryPhone: data.delivery.phone,
+      deliveryAddress: data.delivery.address,
+      deliveryCity: data.delivery.city,
+      deliveryState: data.delivery.state,
+      deliveryNotes: data.delivery.notes,
     })
 
     return {
@@ -195,6 +212,14 @@ export const verifyPaystackPayment = createServerFn({ method: 'POST' })
       items: orderItems,
       total: transaction.amount,
       customerEmail: transaction.customerEmail,
+      delivery: {
+        fullName: transaction.deliveryFullName,
+        phone: transaction.deliveryPhone,
+        address: transaction.deliveryAddress,
+        city: transaction.deliveryCity,
+        state: transaction.deliveryState,
+        notes: transaction.deliveryNotes,
+      },
     })
 
     return { success: true, alreadyProcessed: false }
