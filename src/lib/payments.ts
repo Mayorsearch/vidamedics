@@ -15,9 +15,19 @@ const checkoutItemSchema = z.object({
   quantity: z.number().int().positive().max(99),
 })
 
+const deliveryDetailsSchema = z.object({
+  customerName: z.string().min(1).max(200),
+  phone: z.string().min(1).max(30),
+  address: z.string().min(1).max(500),
+  city: z.string().min(1).max(100),
+  state: z.string().min(1).max(100),
+  postalCode: z.string().max(20).default(''),
+})
+
 const initializeCheckoutSchema = z.object({
   items: z.array(checkoutItemSchema).min(1),
   customerEmail: z.string().email(),
+  delivery: deliveryDetailsSchema,
 })
 
 const verifyPaymentSchema = z.object({
@@ -117,6 +127,7 @@ export const initializePaystackCheckout = createServerFn({ method: 'POST' })
         metadata: {
           order_items: checkout.orderItems,
           shipping: checkout.shipping,
+          delivery: data.delivery,
         },
       }),
     })
@@ -136,6 +147,12 @@ export const initializePaystackCheckout = createServerFn({ method: 'POST' })
       status: 'pending',
       itemsJson: JSON.stringify(checkout.orderItems),
       authorizationUrl: payload.data.authorization_url,
+      customerName: data.delivery.customerName,
+      phone: data.delivery.phone,
+      address: data.delivery.address,
+      city: data.delivery.city,
+      state: data.delivery.state,
+      postalCode: data.delivery.postalCode,
     })
 
     return {
@@ -191,10 +208,12 @@ export const verifyPaystackPayment = createServerFn({ method: 'POST' })
       .where(eq(paymentTransactions.reference, data.reference))
 
     const orderItems = JSON.parse(transaction.itemsJson) as Array<{ name: string; quantity: number; price: number }>
+    const deliveryParts = [transaction.customerName, transaction.address, transaction.city, transaction.state, transaction.postalCode].filter(Boolean)
     await createOrderNotification({
       items: orderItems,
       total: transaction.amount,
       customerEmail: transaction.customerEmail,
+      deliveryAddress: deliveryParts.length > 0 ? deliveryParts.join(', ') : undefined,
     })
 
     return { success: true, alreadyProcessed: false }

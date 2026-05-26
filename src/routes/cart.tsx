@@ -3,7 +3,7 @@ import { useCart } from '@/lib/cart-context'
 import { useIdentity } from '@/lib/identity-context'
 import { formatPrice, SHIPPING_FEE, SHIPPING_THRESHOLD } from '@/lib/currency'
 import { initializePaystackCheckout } from '@/lib/payments'
-import { Trash2, Plus, Minus, ShoppingCart, ArrowLeft } from 'lucide-react'
+import { Trash2, Plus, Minus, ShoppingCart, ArrowLeft, MapPin } from 'lucide-react'
 import { useState } from 'react'
 
 export const Route = createFileRoute('/cart')({
@@ -16,6 +16,44 @@ function CartPage() {
   const navigate = useNavigate()
   const [checkingOut, setCheckingOut] = useState(false)
   const [checkoutError, setCheckoutError] = useState('')
+  const [delivery, setDelivery] = useState({
+    customerName: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    postalCode: '',
+  })
+  const [showDeliveryForm, setShowDeliveryForm] = useState(false)
+  const [deliveryErrors, setDeliveryErrors] = useState<Record<string, string>>({})
+
+  const deliveryComplete = delivery.customerName.trim() !== '' &&
+    delivery.phone.trim() !== '' &&
+    delivery.address.trim() !== '' &&
+    delivery.city.trim() !== '' &&
+    delivery.state.trim() !== ''
+
+  function validateDelivery() {
+    const errors: Record<string, string> = {}
+    if (!delivery.customerName.trim()) errors.customerName = 'Full name is required'
+    if (!delivery.phone.trim()) errors.phone = 'Phone number is required'
+    if (!delivery.address.trim()) errors.address = 'Address is required'
+    if (!delivery.city.trim()) errors.city = 'City is required'
+    if (!delivery.state.trim()) errors.state = 'State is required'
+    setDeliveryErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  function updateField(field: string, value: string) {
+    setDelivery(prev => ({ ...prev, [field]: value }))
+    if (deliveryErrors[field]) {
+      setDeliveryErrors(prev => {
+        const next = { ...prev }
+        delete next[field]
+        return next
+      })
+    }
+  }
 
   if (items.length === 0) {
     return (
@@ -90,9 +128,9 @@ function CartPage() {
         </div>
 
         <div>
-          <div className="bg-white rounded-xl border border-gray-100 p-6 sticky top-24">
-            <h2 className="font-semibold text-gray-900 mb-4">Order Summary</h2>
-            <div className="space-y-3 mb-6">
+          <div className="bg-white rounded-xl border border-gray-100 p-6 sticky top-24 space-y-6">
+            <h2 className="font-semibold text-gray-900">Order Summary</h2>
+            <div className="space-y-3">
               <div className="flex justify-between text-sm text-gray-500">
                 <span>Subtotal</span>
                 <span>{formatPrice(totalPrice)}</span>
@@ -106,11 +144,112 @@ function CartPage() {
                 <span>{formatPrice(totalPrice + (totalPrice >= SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE))}</span>
               </div>
             </div>
+
+            <div className="border-t border-gray-100 pt-4">
+              <button
+                onClick={() => setShowDeliveryForm(!showDeliveryForm)}
+                className="w-full flex items-center justify-between text-left bg-transparent border-0 cursor-pointer p-0"
+              >
+                <div className="flex items-center gap-2">
+                  <MapPin size={16} className={deliveryComplete ? 'text-green-600' : 'text-purple-700'} />
+                  <span className="font-medium text-gray-900 text-sm">Delivery Details</span>
+                </div>
+                {deliveryComplete ? (
+                  <span className="text-xs text-green-600 font-medium">Completed</span>
+                ) : (
+                  <span className="text-xs text-purple-700 font-medium">{showDeliveryForm ? 'Hide' : 'Fill in'}</span>
+                )}
+              </button>
+
+              {showDeliveryForm && (
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <label htmlFor="customerName" className="block text-xs font-medium text-gray-600 mb-1">Full Name *</label>
+                    <input
+                      id="customerName"
+                      type="text"
+                      value={delivery.customerName}
+                      onChange={e => updateField('customerName', e.target.value)}
+                      placeholder="John Doe"
+                      className={`w-full px-3 py-2 text-sm border rounded-lg outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-500 ${deliveryErrors.customerName ? 'border-red-400' : 'border-gray-200'}`}
+                    />
+                    {deliveryErrors.customerName && <p className="text-xs text-red-500 mt-1">{deliveryErrors.customerName}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="phone" className="block text-xs font-medium text-gray-600 mb-1">Phone Number *</label>
+                    <input
+                      id="phone"
+                      type="tel"
+                      value={delivery.phone}
+                      onChange={e => updateField('phone', e.target.value)}
+                      placeholder="+234 800 000 0000"
+                      className={`w-full px-3 py-2 text-sm border rounded-lg outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-500 ${deliveryErrors.phone ? 'border-red-400' : 'border-gray-200'}`}
+                    />
+                    {deliveryErrors.phone && <p className="text-xs text-red-500 mt-1">{deliveryErrors.phone}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="address" className="block text-xs font-medium text-gray-600 mb-1">Street Address *</label>
+                    <input
+                      id="address"
+                      type="text"
+                      value={delivery.address}
+                      onChange={e => updateField('address', e.target.value)}
+                      placeholder="123 Main Street"
+                      className={`w-full px-3 py-2 text-sm border rounded-lg outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-500 ${deliveryErrors.address ? 'border-red-400' : 'border-gray-200'}`}
+                    />
+                    {deliveryErrors.address && <p className="text-xs text-red-500 mt-1">{deliveryErrors.address}</p>}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor="city" className="block text-xs font-medium text-gray-600 mb-1">City *</label>
+                      <input
+                        id="city"
+                        type="text"
+                        value={delivery.city}
+                        onChange={e => updateField('city', e.target.value)}
+                        placeholder="Lagos"
+                        className={`w-full px-3 py-2 text-sm border rounded-lg outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-500 ${deliveryErrors.city ? 'border-red-400' : 'border-gray-200'}`}
+                      />
+                      {deliveryErrors.city && <p className="text-xs text-red-500 mt-1">{deliveryErrors.city}</p>}
+                    </div>
+                    <div>
+                      <label htmlFor="state" className="block text-xs font-medium text-gray-600 mb-1">State *</label>
+                      <input
+                        id="state"
+                        type="text"
+                        value={delivery.state}
+                        onChange={e => updateField('state', e.target.value)}
+                        placeholder="Lagos"
+                        className={`w-full px-3 py-2 text-sm border rounded-lg outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-500 ${deliveryErrors.state ? 'border-red-400' : 'border-gray-200'}`}
+                      />
+                      {deliveryErrors.state && <p className="text-xs text-red-500 mt-1">{deliveryErrors.state}</p>}
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="postalCode" className="block text-xs font-medium text-gray-600 mb-1">Postal Code</label>
+                    <input
+                      id="postalCode"
+                      type="text"
+                      value={delivery.postalCode}
+                      onChange={e => updateField('postalCode', e.target.value)}
+                      placeholder="100001"
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-500"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={async () => {
                 setCheckoutError('')
                 if (!user?.email) {
                   navigate({ to: '/login' })
+                  return
+                }
+
+                if (!validateDelivery()) {
+                  setShowDeliveryForm(true)
                   return
                 }
 
@@ -120,6 +259,7 @@ function CartPage() {
                     data: {
                       items: items.map(i => ({ id: i.id, quantity: i.quantity })),
                       customerEmail: user.email,
+                      delivery,
                     },
                   })
                   window.location.href = checkout.authorizationUrl
@@ -131,16 +271,16 @@ function CartPage() {
               disabled={checkingOut}
               className="w-full bg-purple-700 text-white py-3 rounded-lg font-semibold hover:bg-purple-800 transition-colors border-0 cursor-pointer disabled:bg-purple-400 disabled:cursor-wait"
             >
-              {checkingOut ? 'Opening Paystack...' : 'Pay with Paystack'}
+              {checkingOut ? 'Opening Paystack...' : deliveryComplete ? 'Pay with Paystack' : 'Enter Delivery Details to Pay'}
             </button>
             {checkoutError && (
-              <p className="mt-3 text-sm text-red-600" role="alert">
+              <p className="text-sm text-red-600" role="alert">
                 {checkoutError}
               </p>
             )}
             <Link
               to="/"
-              className="block text-center text-sm text-gray-500 hover:text-purple-700 mt-4 no-underline transition-colors"
+              className="block text-center text-sm text-gray-500 hover:text-purple-700 no-underline transition-colors"
             >
               Continue Shopping
             </Link>
