@@ -5,14 +5,16 @@ import { formatPrice } from './currency.js'
 
 const ADMIN_EMAIL = 'akintolamary2018@gmail.com'
 
-export async function createOrderNotification(data: { items: Array<{ name: string; quantity: number; price: number }>; total: number; customerEmail?: string }) {
+export async function createOrderNotification(data: { items: Array<{ name: string; quantity: number; price: number }>; total: number; customerEmail?: string; deliveryDetails?: { fullName?: string; phone?: string; address?: string; city?: string; state?: string } }) {
   const itemsList = data.items.map(i => `${i.name} x${i.quantity} - ${formatPrice(i.price * i.quantity)}`).join(', ')
   const totalFormatted = formatPrice(data.total)
+  const d = data.deliveryDetails
+  const deliveryInfo = d ? `\nDelivery: ${d.fullName || ''}, ${d.address || ''}, ${d.city || ''}, ${d.state || ''}. Phone: ${d.phone || ''}` : ''
 
   await db.insert(notifications).values({
     type: 'order',
     title: 'New Order Received',
-    message: `Order total: ${totalFormatted}. Items: ${itemsList}. Customer: ${data.customerEmail || 'Guest'}`,
+    message: `Order total: ${totalFormatted}. Items: ${itemsList}. Customer: ${data.customerEmail || 'Guest'}${deliveryInfo}`,
     recipientEmail: ADMIN_EMAIL,
   })
 

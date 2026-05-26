@@ -15,9 +15,18 @@ const checkoutItemSchema = z.object({
   quantity: z.number().int().positive().max(99),
 })
 
+const deliveryDetailsSchema = z.object({
+  fullName: z.string().min(1).max(200),
+  phone: z.string().min(1).max(30),
+  address: z.string().min(1).max(500),
+  city: z.string().min(1).max(100),
+  state: z.string().min(1).max(100),
+})
+
 const initializeCheckoutSchema = z.object({
   items: z.array(checkoutItemSchema).min(1),
   customerEmail: z.string().email(),
+  deliveryDetails: deliveryDetailsSchema,
 })
 
 const verifyPaymentSchema = z.object({
@@ -136,6 +145,7 @@ export const initializePaystackCheckout = createServerFn({ method: 'POST' })
       status: 'pending',
       itemsJson: JSON.stringify(checkout.orderItems),
       authorizationUrl: payload.data.authorization_url,
+      deliveryDetailsJson: JSON.stringify(data.deliveryDetails),
     })
 
     return {
@@ -191,10 +201,12 @@ export const verifyPaystackPayment = createServerFn({ method: 'POST' })
       .where(eq(paymentTransactions.reference, data.reference))
 
     const orderItems = JSON.parse(transaction.itemsJson) as Array<{ name: string; quantity: number; price: number }>
+    const deliveryDetails = JSON.parse(transaction.deliveryDetailsJson || '{}')
     await createOrderNotification({
       items: orderItems,
       total: transaction.amount,
       customerEmail: transaction.customerEmail,
+      deliveryDetails,
     })
 
     return { success: true, alreadyProcessed: false }
