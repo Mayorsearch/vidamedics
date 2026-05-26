@@ -108,13 +108,20 @@ export const generateProductImage = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const openai = new OpenAI()
 
-    const result = await openai.images.generate({
-      model: 'gpt-image-1',
-      prompt: `Professional product photo of a medical equipment: ${data.productName}. Category: ${data.category}. Clean white background, high-quality commercial product photography, studio lighting, no text or watermarks.`,
-      size: '1024x1024',
+    const response = await openai.responses.create({
+      model: 'gpt-4o',
+      input: `Generate a professional product photo of a medical equipment: ${data.productName}. Category: ${data.category}. Clean white background, high-quality commercial product photography, studio lighting, no text or watermarks.`,
+      tools: [{ type: 'image_generation' }],
     })
 
-    const imageBase64 = result.data[0].b64_json
+    let imageBase64: string | undefined
+    for (const item of response.output) {
+      if (item.type === 'image_generation_call' && item.result) {
+        imageBase64 = item.result
+        break
+      }
+    }
+
     if (!imageBase64) {
       throw new Error('Image generation returned no data')
     }
