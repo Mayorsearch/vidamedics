@@ -35,6 +35,39 @@ function AIGenerator() {
   const [generatedProducts, setGeneratedProducts] = useState<GeneratedProduct[]>([])
   const [expandedProduct, setExpandedProduct] = useState<number | null>(null)
 
+  const generateImagesForProducts = async (products: GeneratedProduct[]) => {
+    setGeneratingImages(true)
+    const indices = products.map((_, i) => i)
+    setImageProgress({ current: 0, total: indices.length })
+
+    for (let idx = 0; idx < indices.length; idx++) {
+      const product = products[indices[idx]]
+
+      setGeneratedProducts(prev =>
+        prev.map((p, i) => (i === indices[idx] ? { ...p, imageStatus: 'generating' } : p)),
+      )
+
+      try {
+        const result = await generateProductImage({
+          data: { productName: product.name, category: product.category },
+        })
+        setGeneratedProducts(prev =>
+          prev.map((p, i) =>
+            i === indices[idx] ? { ...p, imageUrl: result.url, imageStatus: 'done' } : p,
+          ),
+        )
+      } catch {
+        setGeneratedProducts(prev =>
+          prev.map((p, i) => (i === indices[idx] ? { ...p, imageStatus: 'error' } : p)),
+        )
+      }
+
+      setImageProgress({ current: idx + 1, total: indices.length })
+    }
+
+    setGeneratingImages(false)
+  }
+
   const handleGenerate = async () => {
     setError('')
     setSuccess('')
@@ -43,10 +76,12 @@ function AIGenerator() {
 
     try {
       const products = await generateProducts({ data: { category, count } })
-      setGeneratedProducts(products.map(p => ({ ...p, selected: true, imageStatus: 'none' as const })))
+      const mapped = products.map(p => ({ ...p, selected: true, imageStatus: 'none' as const }))
+      setGeneratedProducts(mapped)
+      setGenerating(false)
+      await generateImagesForProducts(mapped)
     } catch (err: any) {
       setError(err.message || 'Failed to generate products. Please try again.')
-    } finally {
       setGenerating(false)
     }
   }
@@ -61,7 +96,7 @@ function AIGenerator() {
     setError('')
     setGeneratingImages(true)
     const selectedIndices = generatedProducts
-      .map((p, i) => (p.selected ? i : -1))
+      .map((p, i) => (p.selected && p.imageStatus !== 'done' ? i : -1))
       .filter(i => i !== -1)
     setImageProgress({ current: 0, total: selectedIndices.length })
 
@@ -99,6 +134,7 @@ function AIGenerator() {
   }
 
   const selectedCount = generatedProducts.filter(p => p.selected).length
+  const failedImageCount = generatedProducts.filter(p => p.selected && (p.imageStatus === 'error' || p.imageStatus === 'none')).length
 
   const handleSave = async () => {
     const toSave = generatedProducts
@@ -233,7 +269,8 @@ function AIGenerator() {
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-1">Generating Products</h3>
           <p className="text-sm text-gray-500">
-            AI is creating {count} medical equipment product{count > 1 ? 's' : ''} with Nigerian market prices...
+            AI is creating {count} medical equipment product{count > 1 ? 's' : ''} with Nigerian market prices.
+            Images will be generated automatically after descriptions are ready...
           </p>
         </div>
       )}
@@ -338,23 +375,31 @@ function AIGenerator() {
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <button
-              onClick={handleGenerateImages}
-              disabled={generatingImages || generating || selectedCount === 0}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-6 py-3 rounded-xl font-medium text-sm hover:from-indigo-700 hover:to-blue-700 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-wait border-0 cursor-pointer"
-            >
-              {generatingImages ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Generating Images ({imageProgress.current}/{imageProgress.total})...
-                </>
-              ) : (
-                <>
-                  <ImagePlus size={16} />
-                  Generate Images
-                </>
-              )}
-            </button>
+            {failedImageCount > 0 && (
+              <button
+                onClick={handleGenerateImages}
+                disabled={generatingImages || generating}
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-6 py-3 rounded-xl font-medium text-sm hover:from-indigo-700 hover:to-blue-700 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-wait border-0 cursor-pointer"
+              >
+                {generatingImages ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Generating Images ({imageProgress.current}/{imageProgress.total})...
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus size={16} />
+                    Retry Failed Images ({failedImageCount})
+                  </>
+                )}
+              </button>
+            )}
+            {generatingImages && failedImageCount === 0 && (
+              <div className="inline-flex items-center gap-2 text-indigo-600 text-sm font-medium">
+                <Loader2 size={16} className="animate-spin" />
+                Generating Images ({imageProgress.current}/{imageProgress.total})...
+              </div>
+            )}
             <button
               onClick={handleSave}
               disabled={saving || selectedCount === 0 || generatingImages}
@@ -385,8 +430,8 @@ function AIGenerator() {
           <h3 className="text-lg font-semibold text-gray-900 mb-1">Ready to Generate</h3>
           <p className="text-sm text-gray-500 max-w-md mx-auto">
             Choose a category and the number of products, then click Generate. The AI will create
-            product names, descriptions, and realistic Nigerian market prices. You can also generate
-            product images using AI after the products are created.
+            product names, descriptions, realistic Nigerian market prices, and automatically generate
+            product images using Gemini AI.
           </p>
         </div>
       )}

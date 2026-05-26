@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import Anthropic from '@anthropic-ai/sdk'
-import OpenAI from 'openai'
+import { GoogleGenAI } from '@google/genai'
 import { getStore } from '@netlify/blobs'
 import { requireAuthMiddleware, requireAdminMiddleware } from '../middleware/identity.js'
 import { db } from '../../db/index.js'
@@ -106,31 +106,31 @@ export const generateProductImage = createServerFn({ method: 'POST' })
   .middleware([requireAuthMiddleware, requireAdminMiddleware])
   .inputValidator((data: { productName: string; category: string }) => data)
   .handler(async ({ data }) => {
-    const openai = new OpenAI()
+    const ai = new GoogleGenAI({})
 
-    const response = await openai.responses.create({
-      model: 'gpt-4o',
-      input: `Generate a professional product photo of a medical equipment: ${data.productName}. Category: ${data.category}. Clean white background, high-quality commercial product photography, studio lighting, no text or watermarks.`,
-      tools: [{ type: 'image_generation' }],
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: `Generate a professional product photo of a medical equipment: ${data.productName}. Category: ${data.category}. Clean white background, high-quality commercial product photography, studio lighting, no text or watermarks.`,
+      config: {
+        responseModalities: ['IMAGE'],
+      },
     })
 
-    let imageBase64: string | undefined
-    for (const item of response.output) {
-      if (item.type === 'image_generation_call' && item.result) {
-        imageBase64 = item.result
-        break
-      }
-    }
+    const part = response.candidates?.[0]?.content?.parts?.find(
+      (p: any) => p.inlineData?.mimeType?.startsWith('image/'),
+    )
 
-    if (!imageBase64) {
+    if (!part?.inlineData?.data) {
       throw new Error('Image generation returned no data')
     }
 
     const store = getStore({ name: 'product-images', consistency: 'strong' })
-    const key = `${Date.now()}-ai-${data.productName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}.png`
-    const buffer = Buffer.from(imageBase64, 'base64')
+    const mimeType = part.inlineData.mimeType || 'image/png'
+    const ext = mimeType.includes('webp') ? 'webp' : mimeType.includes('jpeg') || mimeType.includes('jpg') ? 'jpg' : 'png'
+    const key = `${Date.now()}-ai-${data.productName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}.${ext}`
+    const buffer = Buffer.from(part.inlineData.data, 'base64')
     await store.set(key, buffer, {
-      metadata: { contentType: 'image/png' },
+      metadata: { contentType: mimeType },
     })
 
     return { url: `/api/images/${key}` }
