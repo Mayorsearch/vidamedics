@@ -34,6 +34,12 @@ export const paymentTransactions = pgTable("payment_transactions", {
   status: text().notNull().default("pending"),
   itemsJson: text("items_json").notNull().default("[]"),
   authorizationUrl: text("authorization_url").notNull().default(""),
+  customerName: text("customer_name").notNull().default(""),
+  phone: text("phone").notNull().default(""),
+  address: text("address").notNull().default(""),
+  city: text("city").notNull().default(""),
+  state: text("state").notNull().default(""),
+  postalCode: text("postal_code").notNull().default(""),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
